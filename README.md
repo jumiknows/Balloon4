@@ -54,26 +54,19 @@ Code/
   MICROPHONE/         microphone experiments
   driver.py           earlier all-in-one prototype
 docs/
-  raspberry-pi-setup.md
+  quick-start.md       first-time Pi setup, Wi-Fi and SSH
+  raspberry-pi-setup.md  boot-time startup
 ```
 
 Generated sensor logs, lock files, Python caches and camera captures are intentionally kept out of Git.
 
-## Run on the Pi
+## Start here
 
-Install the Python dependencies:
+New to Raspberry Pi? Follow the [quick start guide](docs/quick-start.md) to flash the microSD card, connect over SSH using home Wi-Fi or a phone hotspot, install dependencies and run the logger.
 
-```bash
-python3 -m pip install -r requirements.txt
-```
+For unattended operation, follow the [boot startup guide](docs/raspberry-pi-setup.md) after verifying the sensors work.
 
-Then run the modular flight logger:
-
-```bash
-python3 Code/main.py
-```
-
-The original payload was configured to launch its software automatically when the Raspberry Pi booted. A reproducible systemd example is in [docs/raspberry-pi-setup.md](docs/raspberry-pi-setup.md).
+The active logger runs with `python Code/main.py` from the virtual environment set up in the quick start guide. Hardware is required; this is not a desktop simulator.
 
 ## Project history
 

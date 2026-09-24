@@ -1,67 +1,83 @@
-# Raspberry Pi setup
+# Start Balloon4 automatically when the Pi boots
 
-The original Balloon4 payload ran unattended, so the Raspberry Pi was configured to start the data logger when it booted.
+First complete the [new member quick start](quick-start.md), connect over SSH and confirm the logger works manually with the actual sensors connected.
 
-The exact deployment configuration from the flight hardware was not preserved in this repository. The following systemd unit reproduces that behaviour on a current Raspberry Pi OS installation.
+The original project used automatic startup, but its exact flight-device service configuration is not preserved here. This is an example for a **new setup** using the virtual environment from the quick start.
 
-## 1. Clone and install
+## 1. Check your username and project path
 
-```bash
-git clone https://github.com/jumiknows/Balloon4.git
-cd Balloon4
-python3 -m pip install -r requirements.txt
-```
+~~~bash
+whoami
+pwd
+ls ~/Balloon4/.venv/bin/python
+~~~
 
-Confirm the logger starts manually before enabling boot startup:
+The example below assumes you chose **balloon** as your username and cloned the repo to `/home/balloon/Balloon4`. Replace these paths and the `User=` value if yours are different.
 
-```bash
-python3 Code/main.py
-```
+## 2. Create the service
 
-## 2. Create a systemd service
+~~~bash
+sudo nano /etc/systemd/system/balloon4.service
+~~~
 
-Update the user and paths below to match the Pi.
+Paste:
 
-```ini
+~~~ini
 [Unit]
 Description=Balloon4 sensor logger
 After=multi-user.target
 
 [Service]
 Type=simple
-User=pi
-WorkingDirectory=/home/pi/Balloon4
-ExecStart=/usr/bin/python3 /home/pi/Balloon4/Code/main.py
+User=balloon
+WorkingDirectory=/home/balloon/Balloon4
+ExecStart=/home/balloon/Balloon4/.venv/bin/python /home/balloon/Balloon4/Code/main.py
 Restart=on-failure
 RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
-```
+~~~
 
-Save it as:
+Save and exit Nano (Ctrl+O, Enter, Ctrl+X).
 
-```text
-/etc/systemd/system/balloon4.service
-```
+## 3. Enable and check it
 
-Then enable it:
-
-```bash
+~~~bash
 sudo systemctl daemon-reload
-sudo systemctl enable balloon4.service
-sudo systemctl start balloon4.service
-```
-
-Check the logger:
-
-```bash
+sudo systemctl enable --now balloon4.service
 sudo systemctl status balloon4.service
-journalctl -u balloon4.service
-```
+journalctl -u balloon4.service -b -n 50 --no-pager
+~~~
+
+If everything works, reboot and check again:
+
+~~~bash
+sudo reboot
+~~~
+
+After reconnecting over SSH:
+
+~~~bash
+sudo systemctl status balloon4.service
+journalctl -u balloon4.service -b -n 50 --no-pager
+~~~
+
+The Pi logs to local CSV files even when you disconnect SSH or turn off the phone hotspot. A hotspot is needed for remote access, not for the configured service to keep running.
+
+## Useful commands
+
+~~~bash
+sudo systemctl stop balloon4.service
+sudo systemctl start balloon4.service
+sudo systemctl restart balloon4.service
+sudo systemctl disable --now balloon4.service
+~~~
+
+Only run **one copy** of the logger at a time. Stop the service before running `python Code/main.py` manually to avoid two processes trying to use the same sensors.
 
 ## Hardware notes
 
-The logger expects the sensors to be wired to the Raspberry Pi interfaces used by the Python modules. GPS uses `/dev/ttyS0`, the Geiger counter uses BCM GPIO 17, and the ultrasonic sensor uses BCM GPIO 12 and 13.
+The code expects connected sensors. The GPS uses `/dev/ttyS0`, the Geiger counter uses BCM GPIO 17, and the ultrasonic sensor uses BCM GPIO 12 and 13. Check the payload wiring, power, I2C, UART and SPI setup before running or rebooting the service.
 
-Run hardware tests before relying on the service for a flight or field test.
+This example has not been tested on the original flight computer. Verify each sensor's CSV output and the service's restart behaviour on the actual Pi before using it for field work.
