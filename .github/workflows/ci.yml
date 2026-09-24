@@ -1,0 +1,31 @@
+name: Python checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile active flight modules
+        run: |
+          python -m py_compile \
+            Code/main.py \
+            Code/csv_reader.py \
+            Code/MCP9808/temperature_sensor.py \
+            Code/BN0085/gyroscope_sensor.py \
+            Code/BME680/pressure_sensor.py \
+            Code/GEIGER/geiger_counter.py \
+            Code/ULTRASONIC/ultrasonic_sensor.py \
+            Code/GPS/gps_sensor.py \
+            Code/RFM9X/RFM95X.py
