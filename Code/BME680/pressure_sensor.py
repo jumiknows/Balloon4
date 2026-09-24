@@ -1,50 +1,56 @@
-import time
 import csv
-import os
-from filelock import FileLock
+import time
+from pathlib import Path
+
+import adafruit_bme680
 import board
 import busio
-import adafruit_bme680
+from filelock import FileLock
 
-# Create I2C bus
 i2c = busio.I2C(board.SCL, board.SDA)
 
-pressure_file_path = '/home/jumiknows/Balloon4/Code/BME680/sensor_readings.csv'
-pressure_lock = FileLock(pressure_file_path + ".lock")
+pressure_file_path = Path(__file__).with_name("sensor_readings.csv")
+pressure_lock = FileLock(str(pressure_file_path) + ".lock")
+
 
 class PressureSensor:
     def __init__(self):
         self.initialize_file()
         try:
             self.sensor = adafruit_bme680.Adafruit_BME680_I2C(i2c)
-        except Exception as e:
-            print(f"Error initializing BME680: {e}")
+        except Exception as exc:
+            print(f"Error initializing BME680: {exc}")
             self.sensor = None
 
     def initialize_file(self):
-        if not os.path.exists(pressure_file_path):
-            with open(pressure_file_path, mode='w', newline='') as file:
-                writer = csv.writer(file)
-                writer.writerow(['Timestamp', 'Temperature (C)', 'Pressure (hPa)', 'Humidity (RH)'])
+        if not pressure_file_path.exists():
+            with pressure_file_path.open(mode="w", newline="") as file:
+                csv.writer(file).writerow(
+                    ["Timestamp", "Temperature (C)", "Pressure (hPa)", "Humidity (RH)"]
+                )
 
     def log_data(self):
         while True:
             try:
                 if self.sensor is None:
                     self.sensor = adafruit_bme680.Adafruit_BME680_I2C(i2c)
+
                 with pressure_lock:
-                    with open(pressure_file_path, mode='a', newline='') as file:
+                    with pressure_file_path.open(mode="a", newline="") as file:
                         writer = csv.writer(file)
                         while True:
                             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                            temperature = self.sensor.temperature if self.sensor else 'N/A'
-                            pressure = self.sensor.pressure if self.sensor else 'N/A'
-                            humidity = self.sensor.humidity if self.sensor else 'N/A'
+                            temperature = self.sensor.temperature
+                            pressure = self.sensor.pressure
+                            humidity = self.sensor.humidity
                             writer.writerow([timestamp, temperature, pressure, humidity])
                             file.flush()
-                            print(f"Pressure - Timestamp: {timestamp}, Temperature: {temperature:.2f} C, Pressure: {pressure:.2f} hPa, Humidity: {humidity:.2f} %")
+                            print(
+                                f"Environment - {timestamp}: "
+                                f"{temperature:.2f} C, {pressure:.2f} hPa, {humidity:.2f}% RH"
+                            )
                             time.sleep(1)
-            except Exception as e:
-                print(f"Error logging pressure: {e}")
+            except Exception as exc:
+                print(f"Error logging environmental data: {exc}")
                 self.sensor = None
-                time.sleep(5)  # Wait before retrying
+                time.sleep(5)

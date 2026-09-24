@@ -1,53 +1,41 @@
-import time
 import csv
+import time
+from pathlib import Path
+
 from filelock import FileLock
 
-# File paths
-temperature_file_path = '/home/jumiknows/Balloon4/Code/MCP9808/temperature_readings.csv'
-sensor_file_path = '/home/jumiknows/Balloon4/Code/BN0085/sensor_readings.csv'
-pressure_file_path = '/home/jumiknows/Balloon4/Code/BME680/sensor_readings.csv'
-geiger_file_path = '/home/jumiknows/Balloon4/Code/GEIGER/geiger_log.csv'
-ultrasonic_file_path = '/home/jumiknows/Balloon4/Code/ULTRASONIC/sensor_readings.csv'
-gps_file_path = '/home/jumiknows/Balloon4/Code/GPS/sensor_readings.csv'
+BASE_DIR = Path(__file__).resolve().parent
 
-# Locks for file access
-temperature_lock = FileLock(temperature_file_path + ".lock")
-sensor_lock = FileLock(sensor_file_path + ".lock")
-pressure_lock = FileLock(pressure_file_path + ".lock")
-geiger_lock = FileLock(geiger_file_path + ".lock")
-ultrasonic_lock = FileLock(ultrasonic_file_path + ".lock")
-gps_lock = FileLock(gps_file_path + ".lock")
+file_paths = [
+    BASE_DIR / "MCP9808" / "temperature_readings.csv",
+    BASE_DIR / "BN0085" / "sensor_readings.csv",
+    BASE_DIR / "BME680" / "sensor_readings.csv",
+    BASE_DIR / "GEIGER" / "geiger_log.csv",
+    BASE_DIR / "ULTRASONIC" / "sensor_readings.csv",
+    BASE_DIR / "GPS" / "sensor_readings.csv",
+]
+
+file_locks = [FileLock(str(path) + ".lock") for path in file_paths]
+
 
 def read_csv_files():
-    file_paths = [
-        temperature_file_path,
-        sensor_file_path,
-        pressure_file_path,
-        geiger_file_path,
-        ultrasonic_file_path,
-        gps_file_path
-    ]
-    file_locks = [
-        temperature_lock,
-        sensor_lock,
-        pressure_lock,
-        geiger_lock,
-        ultrasonic_lock,
-        gps_lock
-    ]
-
     while True:
         try:
             for file_path, file_lock in zip(file_paths, file_locks):
                 with file_lock:
-                    with open(file_path, mode='r', newline='') as file:
+                    if not file_path.exists():
+                        continue
+
+                    with file_path.open(mode="r", newline="") as file:
                         reader = csv.reader(file)
                         last_row = None
                         for last_row in reader:
                             pass
+
                         if last_row:
                             print(f"Last entry in {file_path}: {last_row}")
-            time.sleep(10)  # Read every 10 seconds
-        except Exception as e:
-            print(f"Error reading CSV files: {e}")
-            time.sleep(5)  # Wait before retrying
+
+            time.sleep(10)
+        except Exception as exc:
+            print(f"Error reading CSV files: {exc}")
+            time.sleep(5)
