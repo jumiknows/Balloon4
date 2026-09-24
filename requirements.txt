@@ -1,0 +1,11 @@
+filelock
+pyserial
+RPi.GPIO
+rpi-hardware-pwm
+Adafruit-Blinka
+adafruit-circuitpython-mcp9808
+adafruit-circuitpython-bno08x
+adafruit-circuitpython-bme680
+adafruit-circuitpython-gps
+adafruit-circuitpython-rfm9x
+bme680

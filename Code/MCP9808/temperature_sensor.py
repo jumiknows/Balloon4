@@ -1,48 +1,49 @@
-import time
 import csv
-import os
-from filelock import FileLock
+import time
+from pathlib import Path
+
+import adafruit_mcp9808
 import board
 import busio
-import adafruit_mcp9808
+from filelock import FileLock
 
-# Create I2C bus
 i2c = busio.I2C(board.SCL, board.SDA)
 
-temperature_file_path = '/home/jumiknows/Balloon4/Code/MCP9808/temperature_readings.csv'
-temperature_lock = FileLock(temperature_file_path + ".lock")
+temperature_file_path = Path(__file__).with_name("temperature_readings.csv")
+temperature_lock = FileLock(str(temperature_file_path) + ".lock")
+
 
 class TemperatureSensor:
     def __init__(self):
         self.initialize_file()
         try:
             self.sensor = adafruit_mcp9808.MCP9808(i2c)
-        except Exception as e:
-            print(f"Error initializing MCP9808: {e}")
+        except Exception as exc:
+            print(f"Error initializing MCP9808: {exc}")
             self.sensor = None
 
     def initialize_file(self):
-        if not os.path.exists(temperature_file_path):
-            with open(temperature_file_path, mode='w', newline='') as file:
-                writer = csv.writer(file)
-                writer.writerow(['Timestamp', 'Temperature (C)'])
+        if not temperature_file_path.exists():
+            with temperature_file_path.open(mode="w", newline="") as file:
+                csv.writer(file).writerow(["Timestamp", "Temperature (C)"])
 
     def log_data(self):
         while True:
             try:
                 if self.sensor is None:
                     self.sensor = adafruit_mcp9808.MCP9808(i2c)
+
                 with temperature_lock:
-                    with open(temperature_file_path, mode='a', newline='') as file:
+                    with temperature_file_path.open(mode="a", newline="") as file:
                         writer = csv.writer(file)
                         while True:
                             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                            temperature = self.sensor.temperature if self.sensor else 'N/A'
+                            temperature = self.sensor.temperature
                             writer.writerow([timestamp, temperature])
                             file.flush()
-                            print(f"Temperature - Timestamp: {timestamp}, Temperature: {temperature:.2f} C")
+                            print(f"Temperature - {timestamp}: {temperature:.2f} C")
                             time.sleep(1)
-            except Exception as e:
-                print(f"Error logging temperature: {e}")
+            except Exception as exc:
+                print(f"Error logging temperature: {exc}")
                 self.sensor = None
-                time.sleep(5)  # Wait before retrying
+                time.sleep(5)

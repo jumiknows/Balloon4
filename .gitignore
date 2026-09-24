@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.swp
+.venv/
+venv/
+
+# Runtime data
+*.csv
+*.lock
+
+# Camera output
+*.h264
+Code/CAMERA/*.jpg
+Code/CAMERA/*.jpeg
+Code/CAMERA/*.png
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
