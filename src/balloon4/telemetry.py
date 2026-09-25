@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import csv
-from datetime import datetime, timezone
 import json
 import os
-from pathlib import Path
 import platform
 import sys
 import threading
 import time
-from typing import Mapping
 import uuid
+from collections.abc import Mapping
+from datetime import UTC, datetime
+from pathlib import Path
 
 
 class TelemetryWriter:
@@ -21,7 +21,7 @@ class TelemetryWriter:
         run_id: str | None = None,
     ) -> None:
         self.started_monotonic = time.monotonic()
-        self.started_utc = datetime.now(timezone.utc)
+        self.started_utc = datetime.now(UTC)
         self.run_id = run_id or (
             self.started_utc.strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:6]
         )
@@ -60,7 +60,7 @@ class TelemetryWriter:
             path = self.run_dir / f"{sensor_name}.csv"
             is_new = not path.exists()
             elapsed = time.monotonic() - self.started_monotonic
-            timestamp = datetime.now(timezone.utc).isoformat()
+            timestamp = datetime.now(UTC).isoformat()
             row = {
                 "timestamp_utc": timestamp,
                 "elapsed_seconds": f"{elapsed:.3f}",

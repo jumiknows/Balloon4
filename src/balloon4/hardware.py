@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
 import threading
 import time
+from collections.abc import Callable, Mapping
 
 from balloon4.config import FlightConfig
 from balloon4.sensors.ultrasonic import wait_for_level

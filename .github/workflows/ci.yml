@@ -7,7 +7,36 @@ on:
       - main
 
 jobs:
-  core:
+  maintained-code:
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install development package
+        run: python -m pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check src tests
+
+      - name: Test
+        run: pytest -q
+
+      - name: Compile maintained source
+        run: python -m compileall -q src
+
+      - name: Validate flight configuration
+        run: balloon4 --config config/flight.toml check
+
+  legacy-syntax:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,15 +46,15 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install core package
-        run: python -m pip install -e .
-
-      - name: Compile maintained source
-        run: python -m compileall -q src
-
-      - name: Validate flight configuration
-        run: balloon4 --config config/flight.toml check
-
-      - name: Compile legacy entry points
+      - name: Compile 2024 entry points
         run: |
-          python -m py_compile             Code/main.py             Code/csv_reader.py             Code/MCP9808/temperature_sensor.py             Code/BN0085/gyroscope_sensor.py             Code/BME680/pressure_sensor.py             Code/GEIGER/geiger_counter.py             Code/ULTRASONIC/ultrasonic_sensor.py             Code/GPS/gps_sensor.py             Code/RFM9X/RFM95X.py
+          python -m py_compile \
+            Code/main.py \
+            Code/csv_reader.py \
+            Code/MCP9808/temperature_sensor.py \
+            Code/BN0085/gyroscope_sensor.py \
+            Code/BME680/pressure_sensor.py \
+            Code/GEIGER/geiger_counter.py \
+            Code/ULTRASONIC/ultrasonic_sensor.py \
+            Code/GPS/gps_sensor.py \
+            Code/RFM9X/RFM95X.py

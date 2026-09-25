@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
 import signal
 import threading
+from pathlib import Path
 
 from balloon4.config import FlightConfig, load_config
 from balloon4.hardware import HardwareContext

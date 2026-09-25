@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 import time
+from collections.abc import Callable
 
 
 def wait_for_level(
