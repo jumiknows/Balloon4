@@ -4,13 +4,19 @@ __pycache__/
 *.swp
 .venv/
 venv/
+.pytest_cache/
+.ruff_cache/
+dist/
+*.egg-info/
 
-# Runtime data
+# Flight/runtime data
+data/
 *.csv
 *.lock
 
 # Camera output
 *.h264
+*.mp4
 Code/CAMERA/*.jpg
 Code/CAMERA/*.jpeg
 Code/CAMERA/*.png
