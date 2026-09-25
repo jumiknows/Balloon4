@@ -48,7 +48,12 @@ def run(config_path: str | Path) -> None:
         fsync_interval_seconds=config.fsync_interval_seconds,
     )
     writer.write_manifest(_config_summary(config))
-    health = HealthMonitor(enabled)
+
+    stale_after = {
+        name: max(5.0, config.sensors[name].interval_seconds * 5)
+        for name in enabled
+    }
+    health = HealthMonitor(enabled, stale_after_seconds=stale_after)
     hardware = HardwareContext()
 
     try:

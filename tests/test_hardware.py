@@ -58,6 +58,14 @@ class FakeGPIO:
         self.removed.append(pin)
 
 
+class FakeClock:
+    def __init__(self, values):
+        self.values = iter(values)
+
+    def __call__(self):
+        return next(self.values)
+
+
 def test_gps_reports_fix_and_closes_serial_port():
     sensor = GPSSensor(FakeSerialModule, FakeGPSModule, "/dev/serial0")
 
@@ -71,18 +79,22 @@ def test_gps_reports_fix_and_closes_serial_port():
     assert sensor.uart.closed is True
 
 
-def test_geiger_resets_counts_between_samples():
+def test_geiger_uses_actual_sample_window():
     gpio = FakeGPIO()
-    sensor = GeigerSensor(gpio)
+    clock = FakeClock([10.0, 12.0, 13.0])
+    sensor = GeigerSensor(gpio, monotonic=clock)
 
     gpio.callback(17)
     gpio.callback(17)
     first = sensor.read()
     second = sensor.read()
 
-    assert first["counts_per_second"] == 2
-    assert first["dose_rate_usvh"] == pytest.approx(0.3984)
-    assert second["counts_per_second"] == 0
+    assert first["pulse_count"] == 2
+    assert first["window_seconds"] == pytest.approx(2.0)
+    assert first["counts_per_second"] == pytest.approx(1.0)
+    assert first["dose_rate_usvh"] == pytest.approx(0.1992)
+    assert second["pulse_count"] == 0
+    assert second["window_seconds"] == pytest.approx(1.0)
 
     sensor.close()
     assert gpio.removed == [17]
