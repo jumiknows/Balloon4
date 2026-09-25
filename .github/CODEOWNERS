@@ -1,0 +1,10 @@
+# Default owner
+* @jumiknows
+
+# Flight-critical and repository-control areas
+/.github/ @jumiknows
+/config/ @jumiknows
+/src/balloon4/ @jumiknows
+/docs/preflight.md @jumiknows
+/docs/operations.md @jumiknows
+/docs/raspberry-pi-setup.md @jumiknows
