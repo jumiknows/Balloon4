@@ -20,8 +20,8 @@ def _last_csv_row(path: Path) -> list[str] | None:
         rows = csv.reader(file)
         next(rows, None)
         last = None
-        for last in rows:
-            pass
+        for row in rows:
+            last = row
     return last
 
 
