@@ -6,6 +6,13 @@ on:
     branches:
       - main
 
+concurrency:
+  group: balloon4-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   maintained-code:
     strategy:
@@ -20,6 +27,8 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Install development package
         run: python -m pip install -e ".[dev]"
