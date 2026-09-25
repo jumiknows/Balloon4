@@ -14,12 +14,9 @@ data/
 *.csv
 *.lock
 
-# Camera output
+# Large runtime video output
 *.h264
 *.mp4
-Code/CAMERA/*.jpg
-Code/CAMERA/*.jpeg
-Code/CAMERA/*.png
 
 # OS / editor
 .DS_Store

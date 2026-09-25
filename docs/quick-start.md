@@ -1,107 +1,210 @@
-# New member quick start: Raspberry Pi
+# New member quick start
 
-This guide gets you from a blank microSD card to an SSH session on a Balloon4 Raspberry Pi. No monitor or keyboard is needed on the Pi.
+This gets a new Raspberry Pi from a blank microSD card to a Balloon4 configuration check and SSH session.
+
+You do not need a monitor or keyboard on the Pi.
 
 ## What you need
 
-- Raspberry Pi Zero W or Zero 2 W, microSD card (16 GB or larger), card reader and a reliable power supply.
-- A Windows, macOS or Linux laptop.
-- A home Wi-Fi network **or** a phone with a mobile hotspot.
+- Raspberry Pi Zero W or Zero 2 W
+- microSD card, 16 GB or larger
+- card reader
+- reliable power supply
+- Windows, macOS or Linux laptop
+- home Wi-Fi or a phone hotspot
 
-The original Raspberry Pi Zero (without "W") has no built-in Wi-Fi. It needs a supported USB Wi-Fi adapter or another network connection for this guide.
+The original Pi Zero without the W has no built-in Wi-Fi. It needs a supported USB Wi-Fi adapter or another network connection.
 
-## 1. Choose your Wi-Fi
+## 1. Pick a network
 
-**At home:** Use the Wi-Fi network that your laptop can also join.
+At home, use the same Wi-Fi network as your laptop.
 
-**Away from home:** Turn on your phone's Personal Hotspot / Mobile Hotspot. Set a network name and password you can recognize.
+Away from home, a phone hotspot is convenient.
 
-- iPhone: Settings > Personal Hotspot > Allow Others to Join. If available, turn on **Maximize Compatibility**.
-- Android: Settings > Hotspot & tethering / Mobile Hotspot. If there is a Wi-Fi band option, choose **2.4 GHz**.
+On iPhone:
 
-Pi Zero W and Zero 2 W use 2.4 GHz Wi-Fi. Keep the phone hotspot on during the Pi's first boot. Use a second device (your laptop) to connect to the same hotspot; don't rely on the phone itself for the SSH session.
+1. Open Settings.
+2. Open Personal Hotspot.
+3. Turn on Allow Others to Join.
+4. If available, turn on Maximize Compatibility.
 
-The hotspot provides a local network. Mobile data is needed for downloads, but **SSH itself works locally** if the hotspot permits connected devices to talk to one another. Some hotspots isolate clients. If SSH never works even with the correct IP, use a home router or travel router instead.
+On Android:
+
+1. Open Settings.
+2. Open Hotspot and tethering or Mobile Hotspot.
+3. Turn on the hotspot.
+4. If there is a Wi-Fi band option, use 2.4 GHz.
+
+Keep the hotspot on while the Pi boots.
+
+Join the same hotspot from your laptop. Some phones isolate connected devices from one another. If SSH does not work even with the correct IP, use a normal Wi-Fi router or travel router instead.
 
 ## 2. Flash Raspberry Pi OS
 
-1. Download [Raspberry Pi Imager](https://www.raspberrypi.com/software/) on your laptop.
-2. Insert the microSD card into the laptop.
-3. Open Imager. Select your Pi model, **Raspberry Pi OS Lite** (the version recommended for your device) and the correct microSD card. Writing the image erases that card.
-4. Open **OS customisation** before writing and enter:
-   - Hostname: `balloon4`
-   - Username: `balloon` (or your own choice)
-   - A strong password
-   - Wi-Fi name and password from Step 1
-   - Your Wi-Fi country, time zone and keyboard layout
-   - **Enable SSH** with password authentication for this first setup (SSH keys are preferable later)
-5. Write the card, eject it safely, then insert it into the Pi.
+Install Raspberry Pi Imager on your laptop.
 
-Don't put your hotspot password or Pi password in GitHub or screenshots. If Imager has a different screen layout, look for the same *hostname, user, Wi-Fi and SSH* customisation settings. The [official headless setup guide](https://www.raspberrypi.com/documentation/computers/getting-started.html#headless-remote-setup) covers the current Imager workflow.
+Insert the microSD card and select:
 
-## 3. Power up and connect
+- your Pi model
+- Raspberry Pi OS Lite recommended for that device
+- the correct microSD card
 
-1. Switch on your phone hotspot (if using one) and join it from your **laptop**.
-2. Connect power to the Pi's **power** port, not the USB data port. Leave the card in place and let first boot finish.
-3. Open PowerShell on Windows or Terminal on macOS/Linux:
+Before writing the card, open OS customisation and set:
 
-~~~bash
+- hostname: `balloon4`
+- username: `balloon`, or another username you will remember
+- a strong password
+- Wi-Fi name and password
+- Wi-Fi country
+- time zone
+- keyboard layout
+- SSH enabled with password authentication for first setup
+
+Writing the image erases the selected card.
+
+Do not put Pi or hotspot passwords in GitHub, screenshots or shared notes.
+
+## 3. Connect over SSH
+
+Insert the card into the Pi and power it on.
+
+Connect your laptop to the same network.
+
+Try:
+
+```bash
 ssh balloon@balloon4.local
-~~~
+```
 
-Use your chosen username if it isn't `balloon`. On the first connection, check that you're connecting to your Pi and accept its SSH host key, then enter your Pi password (it won't show while you type).
+Use your actual username if it is different.
 
-If `balloon4.local` does not resolve, find the Pi's **local IP address** in your router's device list or the phone hotspot's connected-device list, if your phone shows addresses. Then use the actual address:
+If `balloon4.local` does not resolve, find the Pi in your router or hotspot's connected-device list and use its real local IP:
 
-~~~bash
+```bash
 ssh balloon@192.168.1.123
-~~~
+```
 
-The IP above is an **example**, not the Pi's real address. The laptop and Pi must be on the same local network. If your phone does not show the Pi's IP, switching to a normal Wi-Fi router is usually easier than guessing addresses.
+That address is only an example.
 
-You are connected when your terminal shows a prompt on the Pi, such as `balloon@balloon4:~ $`.
+## 4. Enable the Pi interfaces
 
-## 4. Prepare the Pi
+Run:
 
-Run these commands **inside the Pi's SSH terminal**:
+```bash
+sudo raspi-config
+```
 
-~~~bash
+Under Interface Options:
+
+- enable I2C
+- enable SPI if you plan to test the radio
+- configure Serial so the login shell is disabled and serial hardware is enabled
+
+Reboot after changing interfaces:
+
+```bash
+sudo reboot
+```
+
+Reconnect with SSH.
+
+## 5. Install Balloon4
+
+Inside the Pi:
+
+```bash
 sudo apt update
 sudo apt install -y git python3-venv python3-pip
-git clone https://github.com/jumiknows/Balloon4.git
+
+git clone --depth 1 https://github.com/jumiknows/Balloon4-Flight-Computer.git Balloon4
 cd Balloon4
+
 python3 -m venv --system-site-packages .venv
 source .venv/bin/activate
-python -m pip install -r requirements.txt
-~~~
+python -m pip install -e ".[hardware]"
+```
 
-Using a virtual environment keeps the project dependencies out of the OS-managed Python installation. Package installation needs internet access. Some older Pi Zero hardware and sensor libraries may require extra setup or compatible package versions.
+The shallow clone avoids downloading old camera videos that remain in Git history.
 
-## 5. Check the hardware and logger
+## 6. Check the software first
 
-**Do not start the full logger before the sensors are wired.** It initializes GPIO, I2C sensors and the GPS serial device. Check the wiring, supply voltage and pin assignments against the actual payload first.
+Before connecting or starting all sensors:
 
-Once hardware is connected and verified:
+```bash
+balloon4 --config config/flight.toml check
+```
 
-~~~bash
+This validates the configuration without opening GPIO, I2C or UART devices.
+
+## 7. Check the actual payload wiring
+
+Read [hardware.md](hardware.md).
+
+Do not assume undocumented voltage, wiring or I2C addresses.
+
+Once the hardware has been checked:
+
+```bash
+balloon4 --config config/flight.toml run
+```
+
+The terminal will print a health report periodically.
+
+In another SSH session, you can inspect the newest run:
+
+```bash
 cd ~/Balloon4
 source .venv/bin/activate
-python Code/main.py
-~~~
+balloon4 --config config/flight.toml status
+```
 
-Look for fresh sensor logs in the module folders under `Code/`. For example, the temperature logger writes `Code/MCP9808/temperature_readings.csv`. An individual sensor can fail even when the others are working, so check each log before a field test.
+## 8. Start automatically at boot
 
-To run the logger automatically whenever the Pi boots, follow [Boot startup](raspberry-pi-setup.md). You can disconnect SSH after the service is enabled; the logger runs on the Pi, not on your laptop.
+After manual tests pass, follow [raspberry-pi-setup.md](raspberry-pi-setup.md).
 
-## Quick fixes
+Before field use, complete [preflight.md](preflight.md).
 
-| Problem | Check |
-| --- | --- |
-| SSH times out | Is the Pi powered, booted, and on the same Wi-Fi as the laptop? Does the hotspot isolate devices? Try the real IP or a home router. |
-| Name `balloon4.local` not found | Use the Pi's real IP from the router/hotspot device list. |
-| SSH connection refused | SSH may not be enabled. Recheck Imager's remote-access setting or enable SSH with a monitor/keyboard. |
-| Permission denied | Use the username and password set in Imager, not an assumed default `pi` account. |
-| Pi not joining hotspot | Recheck the exact SSID/password, keep the hotspot active and enable 2.4 GHz / iPhone Maximize Compatibility. |
-| Sensor import or GPIO error | Verify the virtual environment, hardware connections, I2C/SPI/UART configuration, and supported libraries for your Pi model. |
+## Common problems
 
-Official reference: [Raspberry Pi remote access and SSH](https://www.raspberrypi.com/documentation/computers/remote-access.html).
+### SSH times out
+
+Check that the Pi is powered and the laptop is on the same network.
+
+Try the Pi's real local IP instead of `balloon4.local`.
+
+If you are using a phone hotspot, the phone may isolate clients.
+
+### SSH says permission denied
+
+Use the username and password configured in Raspberry Pi Imager. Current Raspberry Pi OS images do not depend on an assumed default `pi` account.
+
+### The Pi does not join the hotspot
+
+Check the exact network name and password.
+
+Use 2.4 GHz or iPhone Maximize Compatibility when available.
+
+### GPS does not open
+
+Check:
+
+```bash
+ls -l /dev/serial0
+```
+
+Then confirm the serial login shell is disabled and the serial hardware is enabled.
+
+### I2C sensors do not appear
+
+Confirm I2C is enabled and review [hardware.md](hardware.md).
+
+### One sensor is degraded
+
+The maintained logger is designed to keep the other workers running. Read the health error, stop the logger if hardware needs to be touched, fix the device and restart.
+
+## Next reading
+
+- [Hardware notes](hardware.md)
+- [Preflight checklist](preflight.md)
+- [Operations](operations.md)
+- [Architecture](architecture.md)
