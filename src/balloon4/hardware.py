@@ -91,10 +91,18 @@ class GPSSensor:
 
 
 class GeigerSensor(_NoopClose):
-    def __init__(self, gpio: object, pin: int = 17, dose_ratio_per_cpm: float = 0.00332) -> None:
+    def __init__(
+        self,
+        gpio: object,
+        pin: int = 17,
+        dose_ratio_per_cpm: float = 0.00332,
+        monotonic: Callable[[], float] = time.monotonic,
+    ) -> None:
         self.gpio = gpio
         self.pin = pin
         self.dose_ratio_per_cpm = dose_ratio_per_cpm
+        self._monotonic = monotonic
+        self._last_read = monotonic()
         self._count = 0
         self._count_lock = threading.Lock()
         self.gpio.setup(self.pin, self.gpio.IN)
@@ -105,12 +113,20 @@ class GeigerSensor(_NoopClose):
             self._count += 1
 
     def read(self) -> Mapping[str, object]:
+        now = self._monotonic()
+        window_seconds = max(now - self._last_read, 1e-6)
+        self._last_read = now
+
         with self._count_lock:
-            cps = self._count
+            pulse_count = self._count
             self._count = 0
+
+        counts_per_second = pulse_count / window_seconds
         return {
-            "counts_per_second": cps,
-            "dose_rate_usvh": cps * 60 * self.dose_ratio_per_cpm,
+            "pulse_count": pulse_count,
+            "window_seconds": window_seconds,
+            "counts_per_second": counts_per_second,
+            "dose_rate_usvh": counts_per_second * 60 * self.dose_ratio_per_cpm,
         }
 
     def close(self) -> None:
