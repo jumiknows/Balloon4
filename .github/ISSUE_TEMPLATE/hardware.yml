@@ -1,0 +1,29 @@
+name: Hardware validation
+description: Track bench or payload validation that cannot be proven in CI.
+title: "test: validate "
+body:
+  - type: textarea
+    id: change
+    attributes:
+      label: What is being validated?
+    validations:
+      required: true
+  - type: textarea
+    id: setup
+    attributes:
+      label: Hardware setup
+      description: Pi model, connected devices, power source, and relevant configuration.
+    validations:
+      required: true
+  - type: textarea
+    id: procedure
+    attributes:
+      label: Procedure
+      description: Exact steps and expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Result
+      description: Fill this in after validation. Do not include private credentials or location data.

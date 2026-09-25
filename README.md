@@ -93,6 +93,12 @@ The exact repository state before the 2026 modernization is preserved on the `ar
 
 The team balloon mission reached roughly 30 km. The complete flight telemetry used to substantiate that altitude is not preserved in this repository. The historical CSVs in Git history are bench and integration sessions, so they are not presented here as flight data.
 
+## Engineering workflow
+
+Changes go through focused pull requests and automated checks. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and [SECURITY.md](SECURITY.md) for credential and hardware-safety guidance.
+
+The repository uses CODEOWNERS, structured issue templates, Dependabot, and a pull-request title check. CI remains hardware-independent, so bench validation is recorded separately when a change touches real devices.
+
 ## Current limitations
 
 - The v2 runtime has not been revalidated on the original payload hardware.
