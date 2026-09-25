@@ -1,6 +1,6 @@
 import pytest
 
-from balloon4.hardware import GPSSensor, GeigerSensor
+from balloon4.hardware import GeigerSensor, GPSSensor
 
 
 class FakeSerialPort:
