@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 
 from balloon4.config import load_config
@@ -43,7 +41,7 @@ interval_seconds = 1
 """
 
 
-def write_config(tmp_path: Path, text: str) -> Path:
+def write_config(tmp_path, text: str):
     config_dir = tmp_path / "config"
     config_dir.mkdir()
     path = config_dir / "flight.toml"
