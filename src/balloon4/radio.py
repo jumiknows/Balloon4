@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 
-
 DEFAULT_MAX_PACKET_BYTES = 240
 
 
