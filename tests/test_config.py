@@ -2,7 +2,6 @@ import pytest
 
 from balloon4.config import load_config
 
-
 BASE_CONFIG = """
 [flight]
 output_root = "data"
