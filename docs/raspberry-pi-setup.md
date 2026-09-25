@@ -1,83 +1,104 @@
-# Start Balloon4 automatically when the Pi boots
+# Start Balloon4 automatically at boot
 
-First complete the [new member quick start](quick-start.md), connect over SSH and confirm the logger works manually with the actual sensors connected.
+Do this only after the quick-start guide works with the real sensors.
 
-The original project used automatic startup, but its exact flight-device service configuration is not preserved here. This is an example for a **new setup** using the virtual environment from the quick start.
+## 1. Confirm the install
 
-## 1. Check your username and project path
+```bash
+cd ~/Balloon4
+source .venv/bin/activate
+balloon4 --config config/flight.toml check
+which balloon4
+```
 
-~~~bash
-whoami
-pwd
-ls ~/Balloon4/.venv/bin/python
-~~~
+The example below assumes:
 
-The example below assumes you chose **balloon** as your username and cloned the repo to `/home/balloon/Balloon4`. Replace these paths and the `User=` value if yours are different.
+- username `balloon`
+- repository at `/home/balloon/Balloon4`
+- virtual environment at `/home/balloon/Balloon4/.venv`
+
+Change the paths if your setup is different.
 
 ## 2. Create the service
 
-~~~bash
+```bash
 sudo nano /etc/systemd/system/balloon4.service
-~~~
+```
 
 Paste:
 
-~~~ini
+```ini
 [Unit]
-Description=Balloon4 sensor logger
-After=multi-user.target
+Description=Balloon4 flight data logger
+After=local-fs.target
 
 [Service]
 Type=simple
 User=balloon
 WorkingDirectory=/home/balloon/Balloon4
-ExecStart=/home/balloon/Balloon4/.venv/bin/python /home/balloon/Balloon4/Code/main.py
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/balloon/Balloon4/.venv/bin/balloon4 --config /home/balloon/Balloon4/config/flight.toml run
 Restart=on-failure
 RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=15
 
 [Install]
 WantedBy=multi-user.target
-~~~
+```
 
-Save and exit Nano (Ctrl+O, Enter, Ctrl+X).
+Save with Ctrl+O, Enter, then Ctrl+X.
 
-## 3. Enable and check it
+## 3. Enable it
 
-~~~bash
+```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now balloon4.service
+```
+
+Check:
+
+```bash
 sudo systemctl status balloon4.service
-journalctl -u balloon4.service -b -n 50 --no-pager
-~~~
+journalctl -u balloon4.service -b -n 100 --no-pager
+```
 
-If everything works, reboot and check again:
+## 4. Reboot test
 
-~~~bash
+```bash
 sudo reboot
-~~~
+```
 
-After reconnecting over SSH:
+Reconnect over SSH and check again:
 
-~~~bash
+```bash
 sudo systemctl status balloon4.service
-journalctl -u balloon4.service -b -n 50 --no-pager
-~~~
+journalctl -u balloon4.service -b -n 100 --no-pager
+```
 
-The Pi logs to local CSV files even when you disconnect SSH or turn off the phone hotspot. A hotspot is needed for remote access, not for the configured service to keep running.
+Then inspect the latest run:
+
+```bash
+cd ~/Balloon4
+source .venv/bin/activate
+balloon4 --config config/flight.toml status
+```
+
+A fresh boot should create a fresh run directory.
 
 ## Useful commands
 
-~~~bash
+```bash
 sudo systemctl stop balloon4.service
 sudo systemctl start balloon4.service
 sudo systemctl restart balloon4.service
 sudo systemctl disable --now balloon4.service
-~~~
+```
 
-Only run **one copy** of the logger at a time. Stop the service before running `python Code/main.py` manually to avoid two processes trying to use the same sensors.
+Never run a manual logger while the service is already using the payload hardware.
 
-## Hardware notes
+## Before field use
 
-The code expects connected sensors. The GPS uses `/dev/ttyS0`, the Geiger counter uses BCM GPIO 17, and the ultrasonic sensor uses BCM GPIO 12 and 13. Check the payload wiring, power, I2C, UART and SPI setup before running or rebooting the service.
+Complete [preflight.md](preflight.md).
 
-This example has not been tested on the original flight computer. Verify each sensor's CSV output and the service's restart behaviour on the actual Pi before using it for field work.
+The service definition is tested structurally in the repository, but the full boot flow still needs validation on the actual Raspberry Pi and sensors.

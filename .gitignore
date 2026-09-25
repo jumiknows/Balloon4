@@ -17,9 +17,9 @@ data/
 # Camera output
 *.h264
 *.mp4
-Code/CAMERA/*.jpg
-Code/CAMERA/*.jpeg
-Code/CAMERA/*.png
+*.jpg
+*.jpeg
+*.png
 
 # OS / editor
 .DS_Store

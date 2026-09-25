@@ -1,75 +1,103 @@
 # Balloon4 Flight Computer
 
-Python flight-computer software for a Raspberry Pi Zero used in the Balloon4 student high-altitude balloon project.
+Raspberry Pi flight-computer software from the Balloon4 high-altitude balloon project.
 
-The payload had to collect data without someone logged into the Pi, so the software was designed to start with the computer and keep logging sensor data throughout the run.
+Balloon4 began as a student team project in 2024. The original software collected environmental, motion, radiation, GPS and distance data on a Raspberry Pi during payload development and flight work.
 
-## What it did
+I returned to the code in 2026 to make the project easier to understand, test and maintain.
 
-`Code/main.py` starts the sensor modules in parallel threads.
+## Current version
 
-| Module | Purpose |
-| --- | --- |
-| MCP9808 | Temperature |
-| BNO08X | Acceleration, gyroscope and magnetometer |
-| BME680 | Temperature, pressure and humidity |
-| Geiger counter | Radiation counts and estimated dose rate |
-| Ultrasonic sensor | Distance measurements |
-| GPS | Position, speed and altitude |
-| RFM9x | 915 MHz LoRa radio support |
-| Camera | Timelapse and video capture with `libcamera` |
+The maintained runtime lives in `src/balloon4`.
 
-Each sensor logger writes its own CSV file so one device can fail or restart without taking down the rest of the data collection.
+It now includes:
 
-```text
-Raspberry Pi Zero
-      |
-      +-- sensor threads
-      |    +-- temperature
-      |    +-- motion
-      |    +-- environment
-      |    +-- radiation
-      |    +-- distance
-      |    +-- GPS
-      |
-      +-- local CSV logs
-      +-- camera capture
-      +-- RFM9x radio support
+- isolated sensor workers, so one device can fail without preventing the other workers from starting
+- one shared I2C bus with serialized access
+- GPS reconnection after serial failures
+- an ultrasonic echo timeout instead of an unbounded GPIO loop
+- UTC timestamps plus monotonic elapsed time
+- a separate directory and manifest for every run
+- periodic disk sync for telemetry files
+- health reporting for every enabled sensor
+- clean shutdown on SIGINT and SIGTERM
+- simulated hardware tests that run without a Raspberry Pi
+- a small CLI for configuration checks, logging and status
+
+The current runtime is tested in CI on Python 3.11 and 3.12.
+
+It still needs to be validated on the original Raspberry Pi hardware before being treated as flight-ready software.
+
+## Sensors
+
+The maintained logger supports:
+
+- MCP9808 temperature sensor
+- BME680 environmental sensor
+- BNO08X IMU
+- GPS over UART
+- Geiger counter on GPIO 17
+- ultrasonic sensor on GPIO 12 and 13
+
+The repository also keeps camera and RFM9x radio support. They are not enabled by default in the maintained logger because those paths have not been revalidated on the original payload hardware.
+
+## How it works
+
+Each enabled sensor gets its own worker.
+
+A worker creates its hardware inside the worker thread, reads a sample, writes it to that run's CSV file and updates its health state. If initialization or reading fails, only that worker enters retry mode. The rest keep logging.
+
+The three I2C sensors share one bus and one lock.
+
+Every run gets its own directory under `data/`. The directory contains a manifest plus one CSV per sensor.
+
+## Quick start
+
+For a new Raspberry Pi, start with [docs/quick-start.md](docs/quick-start.md).
+
+Once the Pi and sensors work manually, use [docs/raspberry-pi-setup.md](docs/raspberry-pi-setup.md) to start the logger automatically at boot.
+
+Useful commands:
+
+```bash
+balloon4 --config config/flight.toml check
+balloon4 --config config/flight.toml run
+balloon4 --config config/flight.toml status
 ```
 
 ## Repository layout
 
 ```text
-Code/
-  main.py             current modular entry point
-  MCP9808/            temperature
-  BN0085/             motion
-  BME680/             environment
-  GEIGER/             radiation
-  GPS/                position
-  ULTRASONIC/         distance
-  RFM9X/              LoRa radio
-  CAMERA/             camera capture
-  Buzzer/             buzzer experiments
-  MICROPHONE/         microphone experiments
-  driver.py           earlier all-in-one prototype
-docs/
-  quick-start.md       first-time Pi setup, Wi-Fi and SSH
-  raspberry-pi-setup.md  boot-time startup
+src/balloon4/       maintained flight-computer software
+config/             flight configuration
+tests/              simulated hardware and runtime tests
+docs/               setup, hardware, architecture and operations
+legacy/2024/        source snapshot from the original 2024 implementation
+data/               runtime telemetry, ignored by Git
 ```
 
-Generated sensor logs, lock files, Python caches and camera captures are intentionally kept out of Git.
+## Documentation
 
-## Start here
-
-New to Raspberry Pi? Follow the [quick start guide](docs/quick-start.md) to flash the microSD card, connect over SSH using home Wi-Fi or a phone hotspot, install dependencies and run the logger.
-
-For unattended operation, follow the [boot startup guide](docs/raspberry-pi-setup.md) after verifying the sensors work.
-
-The active logger runs with `python Code/main.py` from the virtual environment set up in the quick start guide. Hardware is required; this is not a desktop simulator.
+- [Raspberry Pi quick start](docs/quick-start.md)
+- [Hardware notes](docs/hardware.md)
+- [Architecture](docs/architecture.md)
+- [Preflight checklist](docs/preflight.md)
+- [Operations](docs/operations.md)
+- [Automatic boot setup](docs/raspberry-pi-setup.md)
 
 ## Project history
 
-Balloon4 was a team project. Historical work was committed through a mix of personal accounts and the shared `balloon4computing` project account, so the Git history should be read as team history rather than a clean map of individual ownership.
+This was a team project. Historical work was committed through personal accounts and the shared `balloon4computing` account, so Git history is the best source for individual contributions.
 
-This repository is preserved as a student engineering project and reference implementation. It is not maintained as production flight software.
+The exact repository state before the 2026 modernization is preserved on the `archive/flight-era-2024` branch. A source-only snapshot is also kept under `legacy/2024`.
+
+The team balloon mission reached roughly 30 km. The complete flight telemetry used to substantiate that altitude is not preserved in this repository. The historical CSVs in Git history are bench and integration sessions, so they are not presented here as flight data.
+
+## Current limitations
+
+- The v2 runtime has not been revalidated on the original payload hardware.
+- Hardware dependency versions are not locked to a known-good flight image yet.
+- RFM9x packet encoding exists, but radio transmission is not part of the default logger.
+- Camera capture uses the current `rpicam-vid` command but remains optional.
+
+Those items should be resolved on real hardware before another flight.
