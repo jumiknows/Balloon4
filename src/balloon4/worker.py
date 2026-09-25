@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import threading
 from collections.abc import Callable, Mapping
 from typing import Protocol
-import threading
 
 
 class Sensor(Protocol):
