@@ -1,0 +1,25 @@
+name: Feature
+description: Propose a focused improvement to the maintained flight-computer software.
+title: "feat: "
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Need
+      description: What problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: Proposed approach
+      description: Keep this practical. Include affected sensors or services.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation plan
+      description: How should we prove it works in CI and, when relevant, on hardware?
+    validations:
+      required: true
